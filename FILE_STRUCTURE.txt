@@ -1,0 +1,179 @@
+Nagrik Setu — File Structure
+Last Updated: August 17, 2026
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Root
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CIT HACKATHON/
+├── .gitignore
+├── README.md
+├── WORK_STATUS.txt           ← this file's companion; project progress log
+├── FILE_STRUCTURE.txt        ← you are here
+├── package.json              ← root workspace (runs frontend + backend concurrently)
+├── frontend/                 ← React / Vite SPA
+└── backend/                  ← Express / Prisma API
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+frontend/
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+frontend/
+├── index.html                ← entry HTML; full OG/Twitter/SEO meta tags
+├── package.json
+├── tsconfig.json
+├── vite.config.ts
+├── public/
+│   ├── favicon.ico           ← (add icon file here)
+│   ├── favicon.svg           ← (add icon file here)
+│   ├── apple-touch-icon.png  ← (add icon file here)
+│   └── og-image.png          ← (add 1200×630 social preview image here)
+└── src/
+    ├── App.tsx               ← React Router routes
+    ├── main.tsx              ← app entry point
+    ├── i18n.ts               ← i18next setup (EN + HI)
+    ├── index.css             ← global styles + design tokens
+    │
+    ├── components/
+    │   ├── layout/
+    │   │   ├── AppShell.tsx         ← header, footer, help FAB, toast
+    │   │   ├── AuthDialog.tsx       ← sign-in modal (OTP + dev fallback)
+    │   │   ├── OtpRequestForm.tsx   ← real 6-digit OTP verify form
+    │   │   └── LanguageSwitcher.tsx ← EN/HI dropdown + pill modes
+    │   ├── scheme/
+    │   │   ├── SchemeCard.tsx
+    │   │   ├── SchemeResults.tsx
+    │   │   └── SchemeFilter.tsx
+    │   ├── ai/
+    │   │   └── AssistantWidget.tsx  ← AI chat panel
+    │   └── ui/
+    │       ├── Button.tsx
+    │       ├── Modal.tsx
+    │       └── ...
+    │
+    ├── context/
+    │   └── AppStateContext.tsx      ← auth session, applications, grievances,
+    │                                   notifications badge, saved schemes
+    │
+    ├── data/                        ← static mock / seed data (kept as fallback)
+    │   ├── schemes.ts               ← 30 government scheme records
+    │   ├── applications.ts          ← sample application records
+    │   ├── grievances.ts            ← sample grievance records
+    │   ├── states.ts                ← Indian states + UTs
+    │   └── districts.ts             ← district-by-state mapping
+    │
+    ├── hooks/
+    │   └── useAsyncData.ts
+    │
+    ├── lib/
+    │   ├── authSession.ts           ← JWT session read/write (sessionStorage)
+    │   ├── eligibility.ts           ← eligibility scoring logic
+    │   ├── groqApi.ts               ← AI assistant API client
+    │   ├── otpApi.ts                ← OTP endpoints client (register/login/verify)
+    │   ├── profileApi.ts            ← /api/user/profile client
+    │   ├── userStore.ts             ← local user activity state
+    │   ├── mockApi/                 ← mock data functions (kept as fallback)
+    │   │   └── index.ts
+    │   └── api/                     ← REAL backend API clients (Phase 4)
+    │       ├── schemes.ts           ← GET /api/schemes (+ fallback)
+    │       ├── applications.ts      ← POST/GET /api/applications (+ fallback)
+    │       ├── grievances.ts        ← POST/GET /api/grievances (+ fallback)
+    │       └── notifications.ts     ← GET /api/notifications, unread-count,
+    │                                   mark-read, apiRefreshToken, apiLogout
+    │
+    ├── locales/
+    │   ├── en/translation.json
+    │   └── hi/translation.json
+    │
+    ├── pages/
+    │   ├── LandingPage.tsx          ← / (Discovery Hub)
+    │   ├── DiscoverPage.tsx         ← /discover
+    │   ├── SchemesPage.tsx          ← /schemes
+    │   ├── SchemeDetailPage.tsx     ← /schemes/:id
+    │   ├── DashboardPage.tsx        ← /dashboard (applications + grievances)
+    │   ├── GrievancesPage.tsx       ← /grievances + /grievances/new
+    │   ├── GrievanceDetailPage.tsx  ← /grievances/:id
+    │   ├── ServicesPage.tsx         ← /services (Coming Soon placeholder)
+    │   ├── SignInPage.tsx           ← /signin
+    │   ├── ProfilePage.tsx          ← /profile
+    │   └── AboutPage.tsx            ← /about
+    │
+    └── types/
+        └── index.ts                 ← Scheme, Application, Grievance,
+                                        DocumentRecord, CitizenProfile, etc.
+                                        (includes sourceUrl + lastVerifiedAt)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+backend/
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+backend/
+├── .env                      ← local env vars (gitignored)
+├── .env.example              ← tracked template
+├── package.json
+├── tsconfig.json
+├── SETUP.md                  ← dev setup guide
+│
+├── prisma/
+│   ├── schema.prisma         ← full production schema (10 models)
+│   │                            User, OtpRequest, RefreshToken,
+│   │                            Scheme, Application, ApplicationTimeline,
+│   │                            Grievance, GrievanceResponse,
+│   │                            Document, Notification
+│   ├── dev.db                ← SQLite DB (gitignored)
+│   └── migrations/
+│       ├── 20260808.../migration.sql   ← initial User + OtpRequest
+│       └── 20260817164814_add_full_production_schema/migration.sql
+│
+└── src/
+    ├── app.ts                ← Express app factory
+    ├── server.ts             ← HTTP server entry
+    ├── seed.ts               ← Scheme seeder (30 schemes; safe to re-run)
+    │
+    ├── config/
+    │   └── env.ts            ← Zod-validated env (DATABASE_URL, JWT secrets,
+    │                            SMTP config, BCRYPT_ROUNDS, OTP_EXPIRY_MINUTES)
+    │
+    ├── controllers/
+    │   ├── auth.controller.ts      ← 7 handlers: check-unique-id, register,
+    │   │                              login, verify-otp, resend-otp,
+    │   │                              refresh, logout
+    │   ├── scheme.controller.ts    ← list, getById, getRelated
+    │   ├── application.controller.ts ← create, list, getById
+    │   ├── grievance.controller.ts ← create, list, getById
+    │   ├── notification.controller.ts ← list, unreadCount, markRead, markAllRead
+    │   ├── user.controller.ts      ← getProfile, updateProfile
+    │   ├── health.controller.ts    ← GET /health with DB probe
+    │   └── otp.controller.ts       ← legacy OTP endpoint (backward compat)
+    │
+    ├── routes/
+    │   ├── index.ts               ← mounts all route groups under /api
+    │   ├── auth.routes.ts         ← /api/auth/*
+    │   ├── scheme.routes.ts       ← /api/schemes (public)
+    │   ├── application.routes.ts  ← /api/applications (auth required)
+    │   ├── grievance.routes.ts    ← /api/grievances (auth required)
+    │   ├── notification.routes.ts ← /api/notifications (auth required)
+    │   ├── user.routes.ts         ← /api/user/profile (auth required)
+    │   ├── health.routes.ts       ← GET /health
+    │   └── otp.routes.ts          ← /api/auth/otp/* (legacy)
+    │
+    ├── services/
+    │   ├── auth.service.ts        ← JWT sign/verify helpers
+    │   ├── otp.service.ts         ← OTP generate/hash/verify + email send
+    │   ├── email.service.ts       ← SMTP transport (Gmail); singleton reused
+    │   ├── user.service.ts        ← user CRUD + unique ID validation
+    │   └── data.service.ts        ← scheme, application, grievance,
+    │                                 notification, document query helpers
+    │
+    ├── middleware/
+    │   ├── authGuard.ts           ← JWT Bearer token verification
+    │   ├── cors.ts
+    │   ├── errorHandler.ts
+    │   ├── notFound.ts
+    │   ├── requestLogger.ts
+    │   └── validate.ts            ← Zod body/query schema middleware
+    │
+    ├── lib/
+    │   ├── asyncHandler.ts
+    │   ├── errors.ts              ← AppError class
+    │   └── prisma.ts              ← PrismaClient singleton
+    │
+    └── types/
+        └── auth.ts                ← AuthTokenPayload, TokenPair, TokenType

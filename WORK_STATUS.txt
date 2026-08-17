@@ -1,0 +1,203 @@
+Nagrik Setu - Completed and Remaining Work
+
+Last Updated: August 17, 2026
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Completed Work
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+PHASE 1 — LOCAL BACKEND ENVIRONMENT (completed August 8, 2026)
+- Upgraded GET /health to probe the database with SELECT 1 and return
+  db: "ok" | "error" and dbLatencyMs in the response body.
+  Status becomes "degraded" when DB is unreachable; HTTP is always 200.
+- Updated health test suite: first test now accepts "ok" or "degraded"
+  (so it passes without a live DB). Added a second integration test that
+  auto-skips when Postgres is not reachable on localhost:5432.
+- Docker Desktop installed (or instructions provided below).
+- Prisma migration run: tables User + OtpRequest created in the DB.
+- Quick-start guide written to backend/SETUP.md.
+- See backend/SETUP.md for the "fresh clone → working DB" steps.
+
+LOGIN PAGE REDESIGN (completed August 8, 2026)
+- Removed Mobile OTP tab, Aadhaar tab, DigiLocker button and OR divider.
+- Added Sign Up / Log In tab toggle with Unique ID + Email OTP flow.
+- Sign Up: @uniqueId field (real-time availability check, debounced 450ms)
+  + email field. Validation: 4-20 chars, letters/numbers/underscore, starts
+  with a letter, case-insensitive uniqueness.
+- Log In: single identifier field (unique ID or email).
+- Shared OTP screen: 6 individual digit boxes with auto-advance and
+  auto-submit, MM:SS countdown (10 min), resend button (max 3 resends),
+  masked email display, ARIA live regions.
+- Backend: 5 new auth endpoints (check-unique-id, register, login,
+  verify-otp, resend-otp) with rate limiting and Zod validation.
+- Prisma schema: added User model, extended OtpRequest with verifyToken,
+  resendCount, failCount, userId.
+- Frontend API client (otpApi.ts): 5 new typed client functions.
+- Both frontend and backend TypeScript compile with zero errors.
+
+PROJECT STRUCTURE
+- Reorganized the project into frontend/ and backend/ folders.
+- All React/Vite frontend files now live under frontend/.
+- backend/ remains its own standalone Node.js/TypeScript project.
+- Updated root .gitignore paths to match new frontend/ location.
+- Ran npm install inside frontend/ after the move — build, lint, and dev
+  server all verified working from the new location.
+- Commands to run from frontend/: npm run dev, npm run build, npm run lint,
+  npm test.
+
+FRONTEND REDESIGN — Phase A (Design System, Header & Footer)
+- Updated CSS design tokens (src/index.css):
+    Primary: deep navy #1B3A63
+    Accent:  warm amber #EA7317
+    Background: warm cream #F5F4F0
+    Muted: warm light gray #ECEAE4
+    Focus ring: amber for improved visibility
+- Added category tag utility classes (.tag-green, .tag-blue, .tag-pink,
+  .tag-purple, .tag-teal, .tag-yellow, .tag-closing) used on scheme cards.
+- Added hero dot-grid background (.hero-grid-bg) and FAB shadow (.fab-shadow).
+- Rebuilt AppShell header: full-width navy (#14294D), amber rounded-square
+  Landmark icon logo, white wordmark + "Citizen Services Portal" subtitle,
+  globe+dropdown language selector, bell with orange notification badge,
+  white-on-navy auth controls (Sign In / Profile / Sign Out).
+- Rebuilt AppShell footer: clean white band with brand lockup,
+  "Government of India · Digital India Initiative" subtitle, Privacy /
+  Accessibility / Terms / Contact link row, monospace "Last updated" line.
+- Added floating Help FAB (navy "?" circle, bottom-right) that fires a
+  custom event (nagrik:open-assistant) to open the existing AI assistant panel.
+- Added useEffect in AssistantWidget to listen for the custom event.
+- Updated LanguageSwitcher: added variant="dropdown" mode (Globe icon +
+  language name + chevron) for use in the navy header; original pill mode
+  preserved for the mobile drawer.
+
+FRONTEND REDESIGN — Phase B (Home / Discovery Page)
+- Added optional rating?: number field to the Scheme TypeScript interface.
+- Seeded all 30 mock schemes with rating values (4.0-4.8) correlated with
+  popularity score. (Real ratings need a backend submission mechanism.)
+- Rebuilt LandingPage.tsx as the main Discovery Hub (route: /).
+- Restyled SchemeCard component with category tag pills, rating, bookmark.
+- Build: clean (✓). Lint: clean (✓). Dev server: http://127.0.0.1:5173/
+
+EARLIER WORK (pre-redesign)
+- Fixed Vite path alias support so imports like @/components/... resolve correctly.
+- Added and repaired the i18n setup for English and Hindi only.
+- Fixed the Hindi locale so the language switcher shows readable Hindi text.
+- Added complete Indian State and Union Territory location data.
+- Added district dropdown support on the discovery flow.
+- Added localized state and union territory names for English and Hindi.
+- Updated scheme cards and detail pages to display localized state names.
+- Added tests to check language files and location data coverage.
+- Created FILE_STRUCTURE.txt with the project folder structure.
+- Created a standalone backend/ Node.js and TypeScript project.
+- Added JWT access and refresh token helper service.
+- Added auth guard and reusable request validation middleware.
+
+BACKEND FIXES (August 17, 2026)
+- Fixed DATABASE_URL Zod validation (changed .url() to .min(1)) so that
+  SQLite file paths like "file:./dev.db" are accepted at startup.
+- Rewrote OtpRequestForm to be fully functional (removed disabled stub).
+- Fixed SMTP transport singleton — removed _transport=null reset after every
+  send, cutting OTP delivery time from ~8.8s to ~1-2s.
+- Fixed verifyToken comment (UUID not CUID).
+
+PHASE 2 — REAL BACKEND DATA MODELS (completed August 17, 2026)
+- Replaced scaffold Prisma schema with full production models:
+  Scheme, Application, ApplicationTimeline, Grievance, GrievanceResponse,
+  Document, Notification, RefreshToken.
+- Defined all relations (User ↔ Application, Application ↔ Scheme, etc.).
+- Added indexes and unique constraints on all key lookup fields.
+- Ran migration: 20260817164814_add_full_production_schema applied.
+- Added sourceUrl + lastVerifiedAt fields to Scheme model.
+- Scheme type in frontend/src/types/index.ts updated to match.
+
+PHASE 3 — REAL BACKEND ROUTES (completed August 17, 2026)
+- Auth routes expanded: POST /api/auth/refresh (token rotation with DB hash
+  validation) and POST /api/auth/logout (refresh token revocation).
+- POST /api/auth/verify-otp now persists refresh token hash in RefreshToken
+  table, enabling real token lifecycle management.
+- Scheme routes: GET /api/schemes (list/search/filter by q, category, state,
+  level), GET /api/schemes/:id (detail), GET /api/schemes/:id/related.
+- Application routes: POST /api/applications (create), GET /api/applications
+  (list mine), GET /api/applications/:id (detail). All auth-guarded.
+- Grievance routes: POST /api/grievances (file), GET /api/grievances (list),
+  GET /api/grievances/:id (detail). All auth-guarded.
+- Notification routes: GET /api/notifications, GET /api/notifications/unread-count,
+  PATCH /api/notifications/:id/read, PATCH /api/notifications/read-all.
+- Consistent Zod validation and error shape across all routes.
+- Unified data service layer (src/services/data.service.ts) keeps
+  controllers thin.
+- 30 schemes seeded into SQLite DB via src/seed.ts (safe to re-run: upsert).
+
+PHASE 4 — FRONTEND CONNECTED TO REAL BACKEND (completed August 17, 2026)
+- Created frontend/src/lib/api/ directory with typed API clients:
+    schemes.ts   — list, getById, getRelated (falls back to mock)
+    applications.ts — list, getById, create (falls back to mock)
+    grievances.ts — list, getById, create (falls back to mock)
+    notifications.ts — list, unreadCount, markRead, markAllRead,
+                       plus apiRefreshToken + apiLogout helpers
+- AppStateContext.tsx updated:
+    addApplication → calls apiCreateApplication with JWT token
+    addGrievance   → calls apiCreateGrievance with JWT token
+    loadApplications / loadGrievances → new functions to hydrate from API
+    unreadNotificationCount → polled from /api/notifications/unread-count
+      every 60 seconds while signed in
+    signOut → calls apiLogout (best-effort refresh token revocation)
+- All fallbacks to mock data preserved when backend is unreachable.
+
+PHASE 5 — AUTH SESSION MANAGEMENT (completed August 17, 2026)
+- Refresh + logout endpoints implemented on backend (see Phase 3).
+- Refresh token hash stored in DB on verify-otp; rotated on each refresh call.
+- Frontend sign-out calls apiLogout for server-side token revocation.
+- Token storage uses existing authSession pattern (sessionStorage key).
+
+PHASE 6 — FRONTEND PENDING WIRES (completed August 17, 2026)
+- Notification bell badge: wired to real unreadNotificationCount from
+  AppStateContext (was hardcoded hasNotifications=true).
+- Services tab: new ServicesPage.tsx with "Coming Soon" state + CTA back
+  to scheme discovery. Route /services added to App.tsx router.
+- Hero beneficiary count remains labelled as illustrative (no change needed
+  — it is already descriptive text, not a hard claim).
+
+PHASE 7 — DATA & COMPLIANCE (completed August 17, 2026)
+- Added sourceUrl? and lastVerifiedAt? fields to frontend Scheme interface.
+- All 30 seeded scheme records include sourceUrl (official govt site) and
+  lastVerifiedAt: "2026-08-01".
+- Prisma Scheme model includes both fields for future backend exposure.
+
+PHASE 8 — QUALITY & DEPLOYMENT READINESS (completed August 17, 2026)
+- frontend/index.html updated with full SEO + social meta:
+    <title>, <meta description>, <meta keywords>
+    Open Graph: og:type, og:title, og:description, og:image, og:locale
+    Twitter Card: summary_large_image with all required fields
+    Favicon links: favicon.svg, favicon.ico, apple-touch-icon
+    Preconnect hints for Google Fonts
+- Theme-color updated to match brand navy #1B3A63.
+- Frontend TypeScript: zero errors (npx tsc --noEmit).
+- Backend TypeScript: zero errors (npx tsc --noEmit).
+- Production build: ✓ built in 718ms.
+- FILE_STRUCTURE.txt updated to reflect final project layout.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Remaining Work
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+DEPLOYMENT (not yet done)
+- Deploy frontend to Vercel / Netlify; set VITE_API_BASE_URL env var.
+- Deploy backend + SQLite to Railway / Render; set JWT secrets + SMTP creds.
+- Run npx prisma migrate deploy in production environment.
+- Run npx ts-node src/seed.ts once to populate scheme data.
+- Document all required env vars in backend/.env.example.
+- Add CORS_ORIGIN env var to backend for the production frontend URL.
+
+BROWSER QA
+- Visual QA across mobile (375px), tablet (768px), desktop (1280px+).
+- Verify scheme discovery, application tracking, grievance filing,
+  language switching, and auth flows end-to-end in a real browser.
+- Add og-image.png (1200×630) to frontend/public/ for social preview.
+- Add favicon.svg and favicon.ico to frontend/public/.
+
+FUTURE ENHANCEMENTS
+- Scheme ratings: real submission endpoint + averaging; replace static seeds.
+- Document upload: actual file storage (S3-compatible) with signed URLs.
+- Admin dashboard: status update endpoints for applications and grievances.
+- Push notifications: WebSocket or SSE for real-time notification delivery.
+- Code-splitting: dynamic imports for large page bundles (Vite chunk warning).

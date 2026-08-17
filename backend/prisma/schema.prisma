@@ -1,0 +1,265 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// AUTH
+// ─────────────────────────────────────────────────────────────────────────────
+
+/// Registered citizen accounts.
+/// uniqueIdNorm is the lowercase-normalised form of the chosen unique ID,
+/// enforced as unique at the DB level to prevent case-variant duplicates.
+model User {
+  id           String   @id @default(cuid())
+  uniqueId     String
+  uniqueIdNorm String   @unique
+  email        String   @unique
+  displayName  String   @default("")
+  /// Indian mobile number — 10 digits, stored without country code (nullable until set)
+  phone        String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  otpRequests    OtpRequest[]
+  refreshTokens  RefreshToken[]
+  applications   Application[]
+  grievances     Grievance[]
+  documents      Document[]
+  notifications  Notification[]
+
+  @@index([uniqueIdNorm])
+  @@index([email])
+}
+
+/// Stores one-time passcode requests for email-based auth.
+/// otpHash is ALWAYS a bcrypt hash — the plaintext OTP is never persisted.
+model OtpRequest {
+  id          String    @id @default(cuid())
+  email       String
+  /// "signin" or "signup"
+  purpose     String
+  /// bcrypt hash of the 6-digit OTP — never store plaintext
+  otpHash     String
+  expiresAt   DateTime
+  /// Short-lived token returned to the client; sent back on /verify-otp
+  verifyToken String    @unique @default(cuid())
+  /// Number of resend requests so far (max 3)
+  resendCount Int       @default(0)
+  /// Number of failed verify attempts (lock after 5)
+  failCount   Int       @default(0)
+  /// Set when the OTP is successfully verified; null = not yet used
+  usedAt      DateTime?
+  createdAt   DateTime  @default(now())
+
+  /// Linked user (null for registration until account is created)
+  userId String?
+  user   User?   @relation(fields: [userId], references: [id])
+
+  @@index([email])
+  @@index([verifyToken])
+}
+
+/// Long-lived refresh tokens — one per device/session.
+/// Rotated on each use; revoked on logout.
+model RefreshToken {
+  id        String    @id @default(cuid())
+  /// Opaque token value (stored hashed with bcrypt or SHA-256)
+  tokenHash String    @unique
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime  @default(now())
+  expiresAt DateTime
+  /// Set when revoked (logout or rotation); null = still valid
+  revokedAt DateTime?
+  /// User-agent or device label for display in session management
+  userAgent String?
+
+  @@index([userId])
+  @@index([tokenHash])
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SCHEMES (read-only reference data — seeded, not user-generated)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/// Government welfare scheme reference records.
+/// Seeded from the frontend mock data; not user-editable.
+model Scheme {
+  id               String   @id
+  name             String
+  shortDescription String
+  longDescription  String
+  department       String
+  /// "central" | "state"
+  level            String
+  state            String?
+  /// e.g. "agriculture" | "education" | "health" etc.
+  category         String
+  /// JSON: { summary, amount? }
+  benefitsJson     String
+  /// JSON: EligibilityCriteria
+  eligibilityJson  String
+  /// JSON: string[]
+  documentsJson    String
+  /// "online" | "offline" | "both"
+  applicationMode  String
+  officialLink     String?
+  /// Legacy general deadline field (kept for backward compat — prefer applicationEndDate)
+  deadline         String?
+  /// "CURRENT" | "EXPIRED" | "FUTURE" | "LEGACY_VERIFY"
+  /// LEGACY_VERIFY schemes are NEVER returned to public API endpoints.
+  status                String   @default("CURRENT")
+  /// ISO date string — when the application window opens (nullable = always open or unknown)
+  applicationStartDate  String?
+  /// ISO date string — when the application window closes (nullable = always open or unknown)
+  applicationEndDate    String?
+  /// JSON: string[] tags
+  tagsJson         String
+  popularityScore  Float    @default(0)
+  launchedYear     Int
+  rating           Float?
+  sourceUrl        String?
+  lastVerifiedAt   String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  applications Application[]
+
+  @@index([category])
+  @@index([level])
+  @@index([status])
+  @@index([popularityScore])
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// APPLICATIONS
+// ─────────────────────────────────────────────────────────────────────────────
+
+/// A citizen's application for a government scheme.
+model Application {
+  id              String            @id @default(cuid())
+  referenceNumber String            @unique
+  /// "draft" | "submitted" | "under-review" | "approved" | "rejected" | "disbursed"
+  status          String            @default("submitted")
+  submittedDate   String
+  lastUpdated     String
+  userId          String
+  user            User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  schemeId        String
+  scheme          Scheme            @relation(fields: [schemeId], references: [id])
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  timeline        ApplicationTimeline[]
+  documents       Document[]
+
+  @@index([userId])
+  @@index([schemeId])
+  @@index([status])
+}
+
+/// One stage in an application's lifecycle.
+model ApplicationTimeline {
+  id            String      @id @default(cuid())
+  applicationId String
+  application   Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  stage         String
+  date          String
+  note          String
+  createdAt     DateTime    @default(now())
+
+  @@index([applicationId])
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// GRIEVANCES
+// ─────────────────────────────────────────────────────────────────────────────
+
+/// A citizen-filed grievance / complaint.
+model Grievance {
+  id              String             @id @default(cuid())
+  referenceNumber String             @unique
+  subject         String
+  department      String
+  relatedSchemeId String?
+  description     String
+  /// "open" | "in-progress" | "resolved" | "escalated"
+  status          String             @default("open")
+  submittedDate   String
+  /// JSON: string[] attachment filenames
+  attachmentsJson String             @default("[]")
+  userId          String
+  user            User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+
+  responses       GrievanceResponse[]
+
+  @@index([userId])
+  @@index([status])
+}
+
+/// One message in a grievance thread (citizen ↔ department).
+model GrievanceResponse {
+  id          String    @id @default(cuid())
+  grievanceId String
+  grievance   Grievance @relation(fields: [grievanceId], references: [id], onDelete: Cascade)
+  /// "citizen" | "department" | other label
+  from        String
+  message     String
+  date        String
+  createdAt   DateTime  @default(now())
+
+  @@index([grievanceId])
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// DOCUMENTS
+// ─────────────────────────────────────────────────────────────────────────────
+
+/// A document uploaded by a citizen (proof, certificates, etc.).
+model Document {
+  id            String       @id @default(cuid())
+  documentType  String
+  documentLabel String?
+  fileName      String
+  uploadedAt    DateTime     @default(now())
+  /// "Uploaded" (extend later: "Verified", "Rejected")
+  status        String       @default("Uploaded")
+  userId        String
+  user          User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  applicationId String?
+  application   Application? @relation(fields: [applicationId], references: [id])
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  @@index([userId])
+  @@index([documentType])
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// NOTIFICATIONS
+// ─────────────────────────────────────────────────────────────────────────────
+
+/// An in-app notification for a citizen.
+model Notification {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String
+  body      String
+  /// "application" | "grievance" | "scheme" | "system"
+  type      String    @default("system")
+  /// Optional link to the related resource
+  linkUrl   String?
+  readAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId])
+  @@index([readAt])
+}

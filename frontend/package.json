@@ -1,0 +1,37 @@
+{
+  "name": "nagrik-setu",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview --host 127.0.0.1",
+    "lint": "eslint . --ignore-pattern dist",
+    "test": "npm run build && node --test tests/*.test.mjs"
+  },
+  "dependencies": {
+    "@vitejs/plugin-react": "6.0.2",
+    "clsx": "^2.1.1",
+    "framer-motion": "^11.18.2",
+    "i18next": "^24.2.3",
+    "lucide-react": "^0.468.0",
+    "react": "18.2.0",
+    "react-dom": "18.2.0",
+    "react-i18next": "^15.4.1",
+    "react-router-dom": "^6.30.1"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "4.2.1",
+    "@types/node": "22.19.19",
+    "@types/react": "18.2.66",
+    "@types/react-dom": "18.2.22",
+    "eslint": "9.39.4",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "eslint-plugin-react-refresh": "^0.5.3",
+    "tailwindcss": "4.2.1",
+    "typescript": "5.9.3",
+    "typescript-eslint": "^8.66.0",
+    "vite": "8.0.13"
+  }
+}

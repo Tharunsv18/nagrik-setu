@@ -1,0 +1,65 @@
+import type { Grievance } from "@/types";
+
+export const grievances: Grievance[] = [
+  {
+    id: "grv-001",
+    referenceNumber: "GR-2026-300120",
+    subject: "PM-KISAN installment not received",
+    department: "Ministry of Agriculture and Farmers Welfare",
+    relatedSchemeId: "pm-kisan",
+    description: "The beneficiary record shows approved, but the latest installment has not reached the linked account.",
+    status: "in-progress",
+    submittedDate: "2026-07-18",
+    attachments: ["bank-statement.pdf"],
+    responses: [
+      { from: "citizen", date: "2026-07-18", message: "Payment has not been received for the current cycle." },
+      { from: "department", date: "2026-07-21", message: "Bank account validation is being checked with the payment system." },
+    ],
+  },
+  {
+    id: "grv-002",
+    referenceNumber: "GR-2026-300144",
+    subject: "Scholarship portal document mismatch",
+    department: "Ministry of Education",
+    relatedSchemeId: "nsp-post-matric",
+    description: "Income certificate was uploaded, but the portal asks for it again.",
+    status: "open",
+    submittedDate: "2026-08-02",
+    attachments: ["income-certificate.jpg"],
+    responses: [
+      { from: "citizen", date: "2026-08-02", message: "Please confirm why the certificate is not accepted." },
+    ],
+  },
+  {
+    id: "grv-003",
+    referenceNumber: "GR-2026-299844",
+    subject: "Ayushman card hospital empanelment issue",
+    department: "National Health Authority",
+    relatedSchemeId: "ayushman-bharat",
+    description: "The hospital could not find the active beneficiary record during admission.",
+    status: "resolved",
+    submittedDate: "2026-06-25",
+    attachments: [],
+    responses: [
+      { from: "citizen", date: "2026-06-25", message: "The hospital could not verify the card." },
+      { from: "department", date: "2026-06-28", message: "The record was refreshed and shared with the hospital desk." },
+      { from: "department", date: "2026-07-01", message: "Case marked resolved after confirmation from the hospital coordinator." },
+    ],
+  },
+  {
+    id: "grv-004",
+    referenceNumber: "GR-2026-299601",
+    subject: "PMAY document verification delayed",
+    department: "Ministry of Housing and Urban Affairs",
+    relatedSchemeId: "pmay-urban",
+    description: "The application has been in document verification for more than one month.",
+    status: "escalated",
+    submittedDate: "2026-06-10",
+    attachments: ["acknowledgement.pdf"],
+    responses: [
+      { from: "citizen", date: "2026-06-10", message: "Please review the delay in verification." },
+      { from: "department", date: "2026-06-16", message: "The file has been sent to the city-level nodal officer." },
+      { from: "department", date: "2026-07-07", message: "Escalated due to pending municipal verification." },
+    ],
+  },
+];
