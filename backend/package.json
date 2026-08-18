@@ -6,7 +6,9 @@
   "scripts": {
     "dev": "ts-node-dev --respawn --transpile-only src/server.ts",
     "build": "tsc -p tsconfig.json",
+    "postinstall": "prisma generate",
     "start": "node dist/server.js",
+    "release": "npx prisma migrate deploy",
     "lint": "eslint .",
     "test": "node --test -r ts-node/register tests/health.test.ts",
     "prisma:generate": "prisma generate",

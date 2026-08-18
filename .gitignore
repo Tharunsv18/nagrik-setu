@@ -54,8 +54,8 @@ next-env.d.ts
 /backend/prisma/dev.db-journal
 /backend/*.db
 
-# Prisma migrations (generated — do not commit for sqlite dev)
-/backend/prisma/migrations/
+# Prisma migrations — COMMITTED so Render can run prisma migrate deploy
+# /backend/prisma/migrations/
 
 # Portable PostgreSQL binaries (no-install dev setup)
 /postgres16/

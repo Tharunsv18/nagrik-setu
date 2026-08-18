@@ -1,0 +1,64 @@
+services:
+  # ── Backend: Node.js Web Service ────────────────────────────────────────────
+  - type: web
+    name: nagrik-setu-api
+    runtime: node
+    rootDir: backend
+    buildCommand: npm install && npm run build
+    startCommand: npm run release && npm start
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 4000
+      - key: DATABASE_URL
+        value: file:/data/prod.db
+      - key: FRONTEND_ORIGIN
+        sync: false          # set this manually on dashboard after frontend deploys
+      - key: JWT_ACCESS_SECRET
+        generateValue: true
+      - key: JWT_REFRESH_SECRET
+        generateValue: true
+      - key: JWT_ACCESS_EXPIRES_IN
+        value: 15m
+      - key: JWT_REFRESH_EXPIRES_IN
+        value: 7d
+      - key: OTP_EXPIRY_MINUTES
+        value: 10
+      - key: BCRYPT_ROUNDS
+        value: 10
+      - key: RESEND_COOLDOWN_SECONDS
+        value: 60
+      - key: SMTP_HOST
+        sync: false
+      - key: SMTP_PORT
+        value: 587
+      - key: SMTP_SECURE
+        value: false
+      - key: SMTP_USER
+        sync: false
+      - key: SMTP_PASS
+        sync: false
+      - key: SMTP_FROM
+        sync: false
+    disk:
+      name: nagrik-setu-db
+      mountPath: /data
+      sizeGB: 1
+
+  # ── Frontend: Static Site ────────────────────────────────────────────────────
+  - type: static
+    name: nagrik-setu
+    rootDir: frontend
+    buildCommand: npm install && npm run build
+    staticPublishPath: dist
+    pullRequestPreviewsEnabled: false
+    envVars:
+      - key: VITE_API_BASE_URL
+        sync: false          # set to https://nagrik-setu-api.onrender.com
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
