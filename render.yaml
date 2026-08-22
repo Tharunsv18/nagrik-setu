@@ -4,8 +4,8 @@ services:
     name: nagrik-setu-api
     runtime: node
     rootDir: backend
-    buildCommand: npm install && npm run build
-    startCommand: npm run release && npm start
+    buildCommand: npm install --include=dev && npm run build
+    startCommand: npm start
     plan: free
     healthCheckPath: /health
     envVars:
@@ -14,7 +14,7 @@ services:
       - key: PORT
         value: 4000
       - key: DATABASE_URL
-        value: file:/data/prod.db
+        fromGroup: Production
       - key: FRONTEND_ORIGIN
         sync: false          # set this manually on dashboard after frontend deploys
       - key: JWT_ACCESS_SECRET
@@ -43,10 +43,7 @@ services:
         sync: false
       - key: SMTP_FROM
         sync: false
-    disk:
-      name: nagrik-setu-db
-      mountPath: /data
-      sizeGB: 1
+
 
   # ── Frontend: Static Site ────────────────────────────────────────────────────
   - type: static
